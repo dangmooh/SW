@@ -12,13 +12,13 @@ def encrypt_file_aes(file_data, aes_key):
     padder = PKCS7(block_size).padder()
     padded_data = padder.update(file_data) + padder.finalize()
 
-    iv = os.urandom(16)  # 128비트 초기화 벡터 (CFB 모드)
+    iv = os.urandom(16)
     cipher = Cipher(algorithms.AES(aes_key),modes.CBC(iv), backend = default_backend())
     encryptor = cipher.encryptor()
     cipher_text = encryptor.update(padded_data) + encryptor.finalize()
     return iv, cipher_text
 
-def decrypt_file_aes(cipher_text, aes_key, iv): # 암호화랑 모드를 맞춰야 한다,
+def decrypt_file_aes(cipher_text, aes_key, iv):
     block_size = algorithms.AES.block_size
 
     try:
@@ -34,13 +34,13 @@ def decrypt_file_aes(cipher_text, aes_key, iv): # 암호화랑 모드를 맞춰�
         raise ValueError(f'Decryption failed: {e}')
 
 def rsa_key_generation():
-    private_key = rsa.generate_private_key( # RSA Private key 및 public key를 생성한다.
+    private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=4096
     )
     public_key = private_key.public_key()
 
-    private_pem = private_key.private_bytes(  # 암호를 설정하여 사용자를 제한한다.
+    private_pem = private_key.private_bytes(
         encoding = serialization.Encoding.PEM,
         format = serialization.PrivateFormat.TraditionalOpenSSL,
         encryption_algorithm = serialization.BestAvailableEncryption(b'private')
@@ -54,7 +54,7 @@ def rsa_key_generation():
     key_path = os.path.join(os.getcwd(), 'key')
     os.makedirs(key_path, exist_ok= True)
 
-    private_key_path = os.path.join(key_path, "Private_key1.pem") # key 저장 
+    private_key_path = os.path.join(key_path, "Private_key1.pem")
     with open(private_key_path, 'wb') as key_file:
         key_file.write(private_pem)
 
@@ -63,7 +63,7 @@ def rsa_key_generation():
         key_file.write(public_pem)
 
 def encrypt_file_rsa(file_data, public_key_path):
-    with open(public_key_path, 'rb') as key_file: # public key를 활용하여 데이터를 암호화한다.
+    with open(public_key_path, 'rb') as key_file:
         public_key = serialization.load_pem_public_key(
             key_file.read(),
             backend = default_backend()
@@ -78,7 +78,7 @@ def encrypt_file_rsa(file_data, public_key_path):
     )
     return encrypted_file
 
-def decrypt_file_rsa(encrypted_data, private_key_path):  # private key를 활용하여 데이터를 복호화한다.
+def decrypt_file_rsa(encrypted_data, private_key_path):
     with open(private_key_path, 'rb') as key_file:
         private_key = serialization.load_pem_private_key(
             key_file.read(),
@@ -95,14 +95,24 @@ def decrypt_file_rsa(encrypted_data, private_key_path):  # private key를 활용
         )
     return decrypted_file
 
-def compute_file_hash(file_path): # 파일을 읽어와 chunk단위로 해시 변환을 반복하여 256비트의 해시를 생성한다. 
+def compute_file_hash(file_path):
     sha256_hash = hashlib.sha256()
     with open(file_path, 'rb') as file:
         for chunk in iter(lambda: file.read(4096), b""):
             sha256_hash.update(chunk)
     return sha256_hash.hexdigest()
 
-def sign_file(file_data, private_key_path): # private key를 활용하여 데이터의 서명을 생성한다.
+def compute_data_hash(data):
+    sha256_hash = hashlib.sha256()
+    if isinstance(data, str):  # Ensure data is in bytes
+        data = data.encode('utf-8')
+    data_length = len(data)
+    for chunk in range(0, data_length, 4096):
+        sha256_hash.update(data[chunk:min(chunk + 4096, data_length)])
+    return sha256_hash.hexdigest()
+    
+
+def sign_file(file_data, private_key_path):
     with open(private_key_path, 'rb') as key_file:
         private_key = serialization.load_pem_private_key(
             key_file.read(),
@@ -171,5 +181,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    rsa_key_generation()
+    data = compute_data_hash("hello")
+    file = compute_file_hash("hello.txt")
+    print(data)
+    print(file)
+    if data == file:
+        print("same")
+    else:
+        print("not same")

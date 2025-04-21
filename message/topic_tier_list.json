@@ -1,15 +1,15 @@
 {
     "Tier-1":{
         "topics":[
-            "message",
-            "response",
-            "command"
+            "updates/message",
+            "updates/response",
+            "updates/command"
         ]
     },
     "Tier-2":{  
         "topics":[
-            "message",
-            "response"
+            "updates/message",
+            "updates/response"
         ]
     }
 }

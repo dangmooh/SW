@@ -1,30 +1,8 @@
 import paho.mqtt.client as mqtt
 import os
 
-def on_connect(client, userdata, flags, rc):
-    if rc == 0:
-        print("Connected to broker")
-    elif rc ==5:
-        print("Connection refused: not authorized")
-    else:
-        print(f"Connection failed with code {rc}")
 
-def on_disconnect(client, userdata, rc):
-    if rc == 0:
-        print("Disconnected from broker")
-    elif rc ==5:
-        username = input("Enter username: ")
-        password = input("Enter password: ")
-        client.username_pw_set(username, password)
-    elif rc != 0:
-        print(f"Unexpected disconnection: {rc}")
-    
-def on_message(client, userdata, msg):
-    try:
-        payload = msg.payload.decode()
-        print(f"Message received on topic {msg.topic}: {payload}")
-    except Exception as e:
-        print(f"Error decoding message: {e}")
+
 
 
 class MqttSubscriber:
@@ -48,6 +26,32 @@ class MqttSubscriber:
 
         client.loop_forever()
 
+    def connect(client, userdata, flags, rc):
+        if rc == 0:
+            print("Connected to broker")
+        elif rc ==5:
+            print("Connection refused: not authorized")
+        else:
+            print(f"Connection failed with code {rc}")
+
+    def on_disconnect(client, userdata, rc):
+        if rc == 0:
+            print("Disconnected from broker")
+        elif rc ==5:
+            username = input("Enter username: ")
+            password = input("Enter password: ")
+            client.username_pw_set(username, password)
+        elif rc != 0:
+            print(f"Unexpected disconnection: {rc}")
+
+    
+    def on_message(client, userdata, msg):
+        try:
+            payload = msg.payload.decode()
+            print(f"Message received on topic {msg.topic}: {payload}")
+        except Exception as e:
+            print(f"Error decoding message: {e}")
+
 
 def main():
     broker_ip = "127.0.0.1"
@@ -58,8 +62,7 @@ def main():
 
     mqtt_subscriber = MqttSubscriber(broker_ip, 1883, username, password, topic, status)
 
-    receive_message_to_broker(broker_ip, username, password, topic)
-
+    mqtt_subscriber.connect()
 if __name__ == "__main__":
     main()
 

@@ -91,7 +91,7 @@ def main():
     broker_ip = '127.0.0.1'
     username  = input("Enter username: ")
     password  = input("Enter password: ")
-    status = 'login'
+    status = 'login' 
 
     mqtt_client = MqttPublisher(broker_ip, 1883, username, password, topic, status)
 
